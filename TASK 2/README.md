@@ -11,5 +11,6 @@ Konektivitas semua peripheral ke ESP32-S3 Program menjadi masing-masing Task dis
 
 # Simulasi Wiring
 Wokwi: https://wokwi.com/projects/447229815583082497
-<img width="392" height="287" alt="image" src="https://github.com/user-attachments/assets/d4885fb1-25b1-4e1b-bb98-8632d535c88d" />
+<img width="952" height="613" alt="image" src="https://github.com/user-attachments/assets/a25685b4-e657-439b-a3fc-6402455816d3" />
+
 
