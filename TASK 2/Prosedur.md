@@ -1,56 +1,53 @@
 # Multi-Task Paralel Semua Peripheral (ESP32-S3)
-Percobaan ini menunjukkan implementasi multitasking penuh menggunakan FreeRTOS pada ESP32-S3, di mana setiap peripheral (LED, buzzer, stepper motor, servo, potensiometer, encoder, LCD, dan tombol) dikendalikan oleh task terpisah yang berjalan secara paralel di dua inti (Core 0 dan Core 1).
+Program ini mengimplementasikan 8 task FreeRTOS pada ESP32 yang berjalan secara paralel di dua core (Core 0 & Core 1).
+Masing-masing task mengontrol perangkat berbeda seperti OLED, servo, stepper, potensiometer, rotary encoder, tombol, LED, dan buzzer.
 
-Seluruh proses tidak menggunakan loop(), melainkan dijalankan sepenuhnya oleh task independen yang dibagi antara kedua inti prosesor.
-Tujuan utama percobaan ini adalah untuk membuktikan kemampuan ESP32 dalam menjalankan banyak proses secara bersamaan tanpa saling mengganggu, termasuk operasi input (sensor) dan output (aktuator).
+Tujuan percobaan ini adalah untuk membuktikan bahwa ESP32 dapat menjalankan beberapa proses independen secara bersamaan dengan manajemen multitasking berbasis FreeRTOS.
 # Tugas per-TASK
-| Task               | Fungsi                       | Core | Keterangan                  |
-| ------------------ | ---------------------------- | ---- | --------------------------- |
-| TaskLED1Blink      | LED1 berkedip lambat         | 0    | Indikator kerja Core 0      |
-| TaskLED2Blink      | LED2 berkedip cepat          | 1    | Indikator kerja Core 1      |
-| TaskBuzzerBeep     | Buzzer bunyi berkala         | 0    | Bunyi 200 ms setiap 1 detik |
-| TaskStepperRun     | Stepper motor bolak-balik    | 0    | Rotasi 200 step per arah    |
-| TaskServoSweep     | Servo bergerak 0–180°        | 1    | Gerak berulang naik-turun   |
-| TaskLCDDisplay     | LCD tampilkan volt & encoder | 1    | Update setiap 300 ms        |
-| TaskPotReader      | Baca potensiometer           | 1    | Tampilkan nilai ke Serial   |
-| TaskEncoderMonitor | Pantau nilai encoder         | 1    | Tampilkan ke Serial         |
-| TaskButtonCheck    | Deteksi 3 tombol             | 0    | Log tombol ke Serial        |
+| Task | Fungsi | Prioritas | Core | Keterangan |
+| :--- | :--- | :--- | :--- | :--- |
+| **OledTask** | Display Init | 1 | 0 | Menampilkan pesan "Task berjalan" saat boot, lalu task selesai. |
+| **PotTask** | Analog Read | 1 | 0 | Membaca potensiometer setiap 500ms, lapor ke Serial jika berubah. |
+| **ButtonTask** | Input Check | 1 | 0 | Memantau tombol (GPIO 21), lapor ke Serial saat ditekan. |
+| **LedTask** | Blink 5s | 1 | 0 | LED (GPIO 2) berkedip lambat (Nyala 5s, Mati 5s). |
+| **BuzzerTask** | Beep 5s | 1 | 0 | Buzzer (GPIO 1) berbunyi lambat (Nyala 5s, Mati 5s). |
+| **ServoTask** | Sweep 0-180° | 2 | 1 | Menggerakkan servo bolak-balik. |
+| **StepperTask** | Motor Move | 2 | 1 | Motor stepper bergerak 0-200 langkah bolak-balik. |
+| **EncoderTask**| Counter/Reset| 1 | 1 | Membaca putaran encoder; tombol SW (GPIO 6) mereset hitungan. |
+
 # Pemetaan Perangkat Keras
-| Perangkat     | Pin     | Mode            |
-| ------------- | ------- | --------------- |
-| LED1          | GPIO 16 | Output          |
-| LED2          | GPIO 4  | Output          |
-| Buzzer        | GPIO 2  | Output          |
-| Stepper DIR   | GPIO 12 | Output          |
-| Stepper STEP  | GPIO 14 | Output          |
-| Servo         | GPIO 13 | Output (PWM)    |
-| Potensiometer | GPIO 35 | Input analog    |
-| Encoder CLK   | GPIO 18 | Input interrupt |
-| Encoder DT    | GPIO 17 | Input           |
-| Tombol 1      | GPIO 5  | Input pull-up   |
-| Tombol 2      | GPIO 36 | Input pull-up   |
-| Tombol 3      | GPIO 37 | Input pull-up   |
-| LCD I2C SDA   | GPIO 21 | SDA             |
-| LCD I2C SCL   | GPIO 20 | SCL             |
+| Perangkat             | Pin ESP32 | Keterangan           |
+| --------------------- | --------- | -------------------- |
+| **OLED SDA**          | 14        | I2C data             |
+| **OLED SCL**          | 13        | I2C clock            |
+| **Servo Motor**       | 17        | PWM Servo            |
+| **Stepper Motor IN1** | 37        | Kontrol stepper      |
+| **Stepper Motor IN2** | 38        | Kontrol stepper      |
+| **Stepper Motor IN3** | 39        | Kontrol stepper      |
+| **Stepper Motor IN4** | 40        | Kontrol stepper      |
+| **Potensiometer**     | 16        | Input analog         |
+| **Rotary CLK**        | 4         | Sinyal A encoder     |
+| **Rotary DT**         | 5         | Sinyal B encoder     |
+| **Rotary SW**         | 6         | Tombol encoder       |
+| **Push Button**       | 21        | Input tombol         |
+| **LED**               | 2         | Output LED indikator |
+| **Buzzer**            | 1         | Output buzzer aktif  |
+
 # Prosedur Tes / Langkah Percobaan
-| No | Langkah                    | Hasil yang Diharapkan                                     |
-| -- | -------------------------- | --------------------------------------------------------- |
-| 1  | Upload program ke ESP32-S3 | Serial Monitor menampilkan log task aktif                 |
-| 2  | Amati LED1 dan LED2        | LED1 berkedip lambat (~0.5s), LED2 berkedip cepat (~0.3s) |
-| 3  | Amati buzzer               | Bunyi beep singkat setiap 1 detik                         |
-| 4  | Amati motor stepper        | Berputar maju dan mundur otomatis                         |
-| 5  | Amati servo                | Bergerak bolak-balik dari 0°–180°                         |
-| 6  | Putar potensiometer        | Nilai voltase berubah di LCD & Serial                     |
-| 7  | Putar encoder              | Nilai encoder naik/turun di LCD                           |
-| 8  | Tekan tombol 1–3           | Serial menampilkan tombol yang ditekan                    |
-| 9  | Lihat LCD                  | Menampilkan “Volt: X.XX V” dan “Enc: NNN” berganti        |
-| 10 | Amati keseluruhan          | Semua task berjalan serentak tanpa saling mengganggu      |
-# Hasil 
-- Semua task berjalan paralel tanpa blocking, menunjukkan efisiensi multitasking ESP32-S3.
-- LED1 dan LED2 membuktikan bahwa kedua core aktif bekerja bersamaan.
-- LCD berhasil menampilkan pembacaan potensiometer (tegangan) dan encoder secara real-time.
-- Servo dan stepper motor dapat bergerak bersamaan dengan LED, buzzer, dan sensor aktif.
-- Tombol input terbaca akurat meskipun sistem menjalankan banyak proses.
-- Tidak ada penggunaan delay() di luar kebutuhan lokal task → sistem tetap responsif.
+## 🧪 Langkah Percobaan ESP32-S3 (Simulasi Wokwi)
+| No | Langkah (Simulasi) | Hasil yang Diharapkan (di Wokwi) |
+| :--- | :--- | :--- |
+| 1 | **Mulai Simulasi** | Klik tombol 'Start Simulation' (segitiga hijau). |
+| 2 | **Amati Inisialisasi** | Di tab **Serial Monitor**, log akan muncul, diakhiri dengan `=== FreeRTOS 8 Task Started ===`. Di **OLED Display**, pesan "Task berjalan" akan muncul sesaat. |
+| 3 | **Amati LED & Buzzer** | Amati LED (GPIO 2) dan Piezo Buzzer (GPIO 1). | Keduanya akan **menyala bersamaan selama 5 detik**, lalu **mati bersamaan selama 5 detik**, berulang terus-menerus. Ini membuktikan `LedTask` dan `BuzzerTask` berjalan paralel di Core 0. |
+| 4 | **Amati Aktuator** | Amati Servo Motor (GPIO 17) dan Stepper Motor (GPIO 37-40). | Servo akan bergerak bolak-balik (0°–180°). Stepper motor akan berputar maju (200 langkah) lalu mundur (ke 0) secara otomatis dan bersamaan dengan servo. Ini membuktikan `ServoTask` dan `StepperTask` berjalan di Core 1. |
+| 5 | **Atur Potensiometer**| Klik Potensiometer (GPIO 16) dan geser (drag) nilainya ke atas atau ke bawah. | Serial Monitor akan mencetak `Task Potensiometer value: X%` setiap 500ms, *hanya jika* ada perubahan nilai persentase. |
+| 6 | **Putar Encoder** | Klik Rotary Encoder (GPIO 4, 5) dan putar (scroll mouse atau drag melingkar). | Serial Monitor akan mencetak `Task Encoder value: N` (bertambah/berkurang) sesuai arah putaran. |
+| 7 | **Tekan Tombol Encoder** | Klik dan tahan tombol tengah pada Rotary Encoder (GPIO 6). | Serial Monitor akan mencetak `Task Encoder: Direset ke 0`. |
+| 8 | **Tekan Tombol** | Klik dan tahan Tombol (Pushbutton) terpisah (GPIO 21). | Serial Monitor akan mencetak `Task Button: Diklik`. |
+| 9 | **Amati Keseluruhan** | Amati semua komponen secara bersamaan sambil berinteraksi dengan sensor. | Semua *task* (LED, buzzer, motor, sensor) berjalan serentak tanpa saling mengganggu, membuktikan sistem *multitasking* FreeRTOS berjalan dengan sukses. |
+
+
    # Bukti Hasil
-  LED1 & LED2 berkedip pada dua inti berbeda <img width="683" height="468" alt="image" src="https://github.com/user-attachments/assets/ca28a4fb-230e-4cc1-89a2-de36424e48f8" />
+![Uploading image.png…]()
+
