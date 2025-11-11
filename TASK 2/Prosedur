@@ -1,0 +1,54 @@
+# Multi-Task Paralel Semua Peripheral (ESP32-S3)
+Percobaan ini menunjukkan implementasi multitasking penuh menggunakan FreeRTOS pada ESP32-S3, di mana setiap peripheral (LED, buzzer, stepper motor, servo, potensiometer, encoder, LCD, dan tombol) dikendalikan oleh task terpisah yang berjalan secara paralel di dua inti (Core 0 dan Core 1).
+
+Seluruh proses tidak menggunakan loop(), melainkan dijalankan sepenuhnya oleh task independen yang dibagi antara kedua inti prosesor.
+Tujuan utama percobaan ini adalah untuk membuktikan kemampuan ESP32 dalam menjalankan banyak proses secara bersamaan tanpa saling mengganggu, termasuk operasi input (sensor) dan output (aktuator).
+# Tugas per-TASK
+| Task               | Fungsi                       | Core | Keterangan                  |
+| ------------------ | ---------------------------- | ---- | --------------------------- |
+| TaskLED1Blink      | LED1 berkedip lambat         | 0    | Indikator kerja Core 0      |
+| TaskLED2Blink      | LED2 berkedip cepat          | 1    | Indikator kerja Core 1      |
+| TaskBuzzerBeep     | Buzzer bunyi berkala         | 0    | Bunyi 200 ms setiap 1 detik |
+| TaskStepperRun     | Stepper motor bolak-balik    | 0    | Rotasi 200 step per arah    |
+| TaskServoSweep     | Servo bergerak 0–180°        | 1    | Gerak berulang naik-turun   |
+| TaskLCDDisplay     | LCD tampilkan volt & encoder | 1    | Update setiap 300 ms        |
+| TaskPotReader      | Baca potensiometer           | 1    | Tampilkan nilai ke Serial   |
+| TaskEncoderMonitor | Pantau nilai encoder         | 1    | Tampilkan ke Serial         |
+| TaskButtonCheck    | Deteksi 3 tombol             | 0    | Log tombol ke Serial        |
+# Pemetaan Perangkat Keras
+| Perangkat     | Pin     | Mode            |
+| ------------- | ------- | --------------- |
+| LED1          | GPIO 16 | Output          |
+| LED2          | GPIO 4  | Output          |
+| Buzzer        | GPIO 2  | Output          |
+| Stepper DIR   | GPIO 12 | Output          |
+| Stepper STEP  | GPIO 14 | Output          |
+| Servo         | GPIO 13 | Output (PWM)    |
+| Potensiometer | GPIO 35 | Input analog    |
+| Encoder CLK   | GPIO 18 | Input interrupt |
+| Encoder DT    | GPIO 17 | Input           |
+| Tombol 1      | GPIO 5  | Input pull-up   |
+| Tombol 2      | GPIO 36 | Input pull-up   |
+| Tombol 3      | GPIO 37 | Input pull-up   |
+| LCD I2C SDA   | GPIO 21 | SDA             |
+| LCD I2C SCL   | GPIO 20 | SCL             |
+# Prosedur Tes / Langkah Percobaan
+| No | Langkah                    | Hasil yang Diharapkan                                     |
+| -- | -------------------------- | --------------------------------------------------------- |
+| 1  | Upload program ke ESP32-S3 | Serial Monitor menampilkan log task aktif                 |
+| 2  | Amati LED1 dan LED2        | LED1 berkedip lambat (~0.5s), LED2 berkedip cepat (~0.3s) |
+| 3  | Amati buzzer               | Bunyi beep singkat setiap 1 detik                         |
+| 4  | Amati motor stepper        | Berputar maju dan mundur otomatis                         |
+| 5  | Amati servo                | Bergerak bolak-balik dari 0°–180°                         |
+| 6  | Putar potensiometer        | Nilai voltase berubah di LCD & Serial                     |
+| 7  | Putar encoder              | Nilai encoder naik/turun di LCD                           |
+| 8  | Tekan tombol 1–3           | Serial menampilkan tombol yang ditekan                    |
+| 9  | Lihat LCD                  | Menampilkan “Volt: X.XX V” dan “Enc: NNN” berganti        |
+| 10 | Amati keseluruhan          | Semua task berjalan serentak tanpa saling mengganggu      |
+# Hasil 
+- Semua task berjalan paralel tanpa blocking, menunjukkan efisiensi multitasking ESP32-S3.
+- LED1 dan LED2 membuktikan bahwa kedua core aktif bekerja bersamaan.
+- LCD berhasil menampilkan pembacaan potensiometer (tegangan) dan encoder secara real-time.
+- Servo dan stepper motor dapat bergerak bersamaan dengan LED, buzzer, dan sensor aktif.
+- Tombol input terbaca akurat meskipun sistem menjalankan banyak proses.
+- Tidak ada penggunaan delay() di luar kebutuhan lokal task → sistem tetap responsif.
