@@ -35,7 +35,7 @@ Tujuan percobaan ini adalah untuk membuktikan bahwa ESP32 dapat menjalankan bebe
 
 # Prosedur Tes / Langkah Percobaan
 ## 🧪 Langkah Percobaan ESP32-S3 (Simulasi Wokwi)
-| No | Langkah (Simulasi) | Hasil yang Diharapkan (di Wokwi) |
+| No | Langkah Percobaan | Hasil yang Diharapkan |
 | :--- | :--- | :--- |
 | 1 | **Mulai Simulasi** | Klik tombol 'Start Simulation' (segitiga hijau). |
 | 2 | **Amati Inisialisasi** | Di tab **Serial Monitor**, log akan muncul, diakhiri dengan `=== FreeRTOS 8 Task Started ===`. Di **OLED Display**, pesan "Task berjalan" akan muncul sesaat. |
@@ -47,7 +47,7 @@ Tujuan percobaan ini adalah untuk membuktikan bahwa ESP32 dapat menjalankan bebe
 | 8 | **Tekan Tombol** | Klik dan tahan Tombol (Pushbutton) terpisah (GPIO 21). | Serial Monitor akan mencetak `Task Button: Diklik`. |
 | 9 | **Amati Keseluruhan** | Amati semua komponen secara bersamaan sambil berinteraksi dengan sensor. | Semua *task* (LED, buzzer, motor, sensor) berjalan serentak tanpa saling mengganggu, membuktikan sistem *multitasking* FreeRTOS berjalan dengan sukses. |
 
+# Bukti Hasil
+<img width="952" height="613" alt="image" src="https://github.com/user-attachments/assets/1566bd21-45b0-400f-a41a-9eebabd7eaa5" />
 
-   # Bukti Hasil
-![Uploading image.png…]()
 
