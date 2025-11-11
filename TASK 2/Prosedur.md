@@ -1,4 +1,4 @@
-<img width="683" height="468" alt="image" src="https://github.com/user-attachments/assets/fb50e7ac-55f8-47a0-9f1a-d6cdeb4fcc82" /># Multi-Task Paralel Semua Peripheral (ESP32-S3)
+# Multi-Task Paralel Semua Peripheral (ESP32-S3)
 Percobaan ini menunjukkan implementasi multitasking penuh menggunakan FreeRTOS pada ESP32-S3, di mana setiap peripheral (LED, buzzer, stepper motor, servo, potensiometer, encoder, LCD, dan tombol) dikendalikan oleh task terpisah yang berjalan secara paralel di dua inti (Core 0 dan Core 1).
 
 Seluruh proses tidak menggunakan loop(), melainkan dijalankan sepenuhnya oleh task independen yang dibagi antara kedua inti prosesor.
